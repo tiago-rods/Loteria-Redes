@@ -1,0 +1,27 @@
+Loteria
+O sistema de loteria implementará uma aplicação cliente/server que faz sorteio de números para os usuários
+apostarem.
+O usuário, através do cliente da aplicação, iniciará a conexão ao servidor, e receberá, de imediato, uma mensagem
+no seguinte formato “<HORARIO>: CONECTADO!!” (no diagrama, MSG1).
+Duas threads então serão criadas, tanto no server quanto no cliente, para manipulação da conexão através do
+handle que identifica a conexão.
+O usuário informará via teclado os parâmetros da loteria, sendo:
+:inicio <NUMERO>
+:fim <NUMERO>
+:qtd <NUMERO>
+APOSTA DE NUMEROS (separados por espaços)
+Sendo que os dados iniciados por dois pontos (: ) serão tratados como comandos para configurar a loteria, caso
+sejam números e espaços, será considerado como aposta. O server, por sua vez, interpretará esses dados para
+configurar a loteria ou fazer a aposta do cliente. Caso a loteria não seja configurada no inicio da execução, ela
+considerará como de 0 a 100, 5 numeros sorteados, porém esta configuração poderá ocorrer a qualquer momento, e
+valerá para a próxima aposta.
+A thread 1 do cliente aguardará o usuário digitar os comandos ou numeros, e ao fazê-lo, enviará via conexão de rede
+ao server e voltará a aguardar que o usuário digite outros numeros infinitamente, até o momento do sorteio.
+A thread 2 do cliente estará aguardando receber dados do server, que os imprimirá tela quando recebidos, e voltará
+a aguardar novos dados.
+A thread 1 do servidor receberá as apostas do usuário via conexão de rede, e armazenará estes números em uma
+lista, e voltará a aguardar novas apostas.
+A thread 2 do servidor será iniciada aguardando por 1 minuto, e fazendo sorteio dos números conforme configurado
+pelo usuário. Ao terminar o sorteio, ela verificará se o usuário fez apostas (percorrendo a lista referenciada acima), e
+verificando se alguma aposta foi sorteada. Após isso, ela enviará o resultado do sorteio ao cliente, e informará quais
+números ele acertou. A lista será então zerada e um novo ciclo será iniciado
