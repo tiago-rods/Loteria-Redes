@@ -1,3 +1,13 @@
+Objetivo
+O projeto prático 1 busca criar conhecimentos sobre o uso das bibliotecas de Sockets para desenvolvimento de
+aplicações em rede no modelo client/server.
+Utilizar conhecimentos e habilidades em:
+• Uso de plataformas de desenvolvimento;
+• Uso de threads;
+• Memória compartilhada e estruturas de dados;
+Todos os temas fazem uso dos mesmos conceitos, mudando de formas simples os dados e as interações, porém,
+sempre implementando comunicação bidirecional assíncrona na rede através da utilização de threads.
+
 Loteria
 O sistema de loteria implementará uma aplicação cliente/server que faz sorteio de números para os usuários
 apostarem.
