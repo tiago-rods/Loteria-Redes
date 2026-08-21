@@ -1,7 +1,7 @@
 #pragma once 
 
-#include<Windows.h>
 #include <winsock2.h>
+#include <Windows.h>
 #include <string>
 
 class Socket {

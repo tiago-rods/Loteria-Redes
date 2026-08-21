@@ -1,5 +1,4 @@
 #include "Socket.hpp"
-#include <Windows.h>
 #include <ws2tcpip.h>
 #include <stdexcept>
 
@@ -10,7 +9,7 @@ Como faz: Chama socket() do Winsock com AF_INET (IPv4), SOCK_STREAM (TCP) e IPPR
 Possíveis dúvidas: a falha na criação retorna INVALID_SOCKET (diferente de SOCKET_ERROR, usado pelas outras chamadas como bind/connect/send)
 ========================*/
 Socket::Socket()
-    : handle_(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
+    : handle_(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) // IPv4, TCP, lança a excessão se falhar
     {
         if (handle_ == INVALID_SOCKET)
         {
@@ -37,7 +36,7 @@ Possíveis dúvidas: RAII = o recurso (socket) é liberado automaticamente pelo 
 ========================*/
 Socket::~Socket()
 {
-    close();
+    close(); // Destrutor
 }
 
 /*=======================
