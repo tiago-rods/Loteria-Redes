@@ -49,9 +49,9 @@ Possíveis dúvidas: por que não copiar em vez de mover? Dois objetos com o mes
 ========================*/
 Socket::Socket(Socket&& other)
     noexcept : handle_(other.handle_)
-    {
+{
         other.handle_ = INVALID_SOCKET;
-    }
+}
 
 /*=======================
 O que é: Operador de atribuição por movimento
