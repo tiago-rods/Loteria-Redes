@@ -15,6 +15,7 @@ public:
     void run();
 
 private:
+    // métodos de escrita e leitura das threads
     void inputLoop();
     void outputLoop();
 
