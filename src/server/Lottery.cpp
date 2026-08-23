@@ -143,13 +143,12 @@ bool Lottery::addAposta(const std::vector<int>& numbers)
 }
 
 /*=======================
-O que é: Um ciclo completo de sorteio — o coração da classe
+O que é: Um ciclo completo de sorteio
 O que faz: Sorteia os números, confere todas as apostas do ciclo, zera a lista e devolve o
  resultado para quem for enviar ao cliente
 Como faz: Monta um vetor com todos os números possíveis do intervalo (iota), embaralha
- (shuffle) e pega os qtd_ primeiros — isso garante números distintos de graça. Ordena o
- resultado para ficar legível e para permitir busca binária. Depois percorre cada aposta
- marcando quais números dela saíram
+ (shuffle) e pega os qtd_ primeiros. Ordena o resultado para ficar legível e para permitir
+ busca binária. Depois percorre cada aposta marcando quais números dela saíram
 Possíveis dúvidas: por que sortear, conferir e zerar tudo sob o MESMO lock? Esse é o ponto
  crítico da classe. Se o mutex fosse solto entre o sorteio e o bets_.clear(), uma aposta que
  chegasse nesse intervalo de tempo seria apagada sem nunca ter sido conferida — o usuário
@@ -167,12 +166,12 @@ DrawResult Lottery::draw()
 
     DrawResult result;
 
-    // universo = todos os números que podem sair. O tamanho é seguro por causa do intervaloMax
-    std::vector<int> universo(static_cast<std::size_t>(fim_ - inicio_ + 1));
-    std::iota(universo.begin(), universo.end(), inicio_); // preenche com inicio_, inicio_+1, ...
-    std::shuffle(universo.begin(), universo.end(), rng_);
+    // conjunto = todos os números que podem sair. O tamanho é seguro por causa do intervaloMax
+    std::vector<int> conjunto(static_cast<std::size_t>(fim_ - inicio_ + 1));
+    std::iota(conjunto.begin(), conjunto.end(), inicio_); // preenche com inicio_, inicio_+1, ...
+    std::shuffle(conjunto.begin(), conjunto.end(), rng_);
 
-    result.drawn.assign(universo.begin(), universo.begin() + qtd_); // os qtd_ primeiros do baralho
+    result.drawn.assign(conjunto.begin(), conjunto.begin() + qtd_); // os qtd_ primeiros do baralho
     std::sort(result.drawn.begin(), result.drawn.end());
 
     // confere aposta por aposta
