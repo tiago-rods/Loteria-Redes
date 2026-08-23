@@ -53,7 +53,7 @@ public:
 
     // Registra uma aposta. Retorna false se a aposta for vazia, tiver números repetidos, ou
     // tiver algum número fora do intervalo configurado no momento.
-    bool addBet(const std::vector<int>& numbers);
+    bool addAposta(const std::vector<int>& numbers);
 
     // Sorteia, confere todas as apostas e zera a lista — tudo numa operação só.
     DrawResult draw();

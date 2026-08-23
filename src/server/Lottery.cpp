@@ -46,13 +46,12 @@ Possíveis dúvidas: por que calcular range em long? Porque "fim - inicio + 1" c
 ========================*/
 bool Lottery::isValidConfig(int inicio, int fim, int qtd) const
 {
-    if (inicio >= fim || inicio < 0) return false; // intervalo invertido ou de um número só
-    if (qtd < 1) return false;       // sorteio de zero números não faz sentido
+    if (inicio >= fim) return false; // intervalo invertido ou de um número só
 
-    const long intervalo = static_cast<long>(fim) - inicio + 1; // quantos números existem no intervalo
+    const long long intervalo = static_cast<long long>(fim) - inicio + 1; // quantos números existem no intervalo
 
     if (intervalo > intervaloMax) return false; // intervalo grande demais para materializar em draw()
-    if (qtd >= intervalo) return false;       // não dá para sortear 10 números distintos de um intervalo de 4
+    if (qtd > intervalo) return false;       // não dá para sortear 10 números distintos de um intervalo de 4
     //Se qtd == intervalo, vai simplesmente sortear todos os possíveis valores
 
     return true;
@@ -71,7 +70,7 @@ bool Lottery::setInicio(int value)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (!isValidConfig(value, fim_, qtd_)) return false;
+    if (value < 0 || !isValidConfig(value, fim_, qtd_)) return false;
 
     inicio_ = value;
     return true;
@@ -101,7 +100,8 @@ bool Lottery::setQtd(int value)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (!isValidConfig(inicio_, fim_, value)) return false;
+    if (value < 1 || !isValidConfig(inicio_, fim_, value)) return false;
+    // sorteio de zero números não faz sentido
 
     qtd_ = value;
     return true;
@@ -115,17 +115,17 @@ O que retorna: false se a aposta é vazia, tem número fora do intervalo, ou tem
 Como faz: Checa vazio, percorre validando a faixa de cada número, e detecta repetidos ordenando
  uma cópia e procurando dois elementos iguais lado a lado com adjacent_find
 Possíveis dúvidas: por que validar aqui, se já existe um parser? Porque parseAposta (Protocol.cpp)
- só garante que a linha é composta de inteiros — ela aceita "-5" e "999999" numa boa, porque não
+ só garante que a linha é composta de inteiros — ela aceita "-5" e "999999", porque não
  conhece a configuração da loteria. Este é o único ponto do código que sabe qual é o intervalo
  válido, então a checagem de faixa tem que morar aqui.
  E por que rejeitar repetidos? Porque o sorteio devolve números distintos, então uma aposta
  "7 7 7" contaria o mesmo acerto três vezes e reportaria "ACERTOU 3" com um número só
 ========================*/
-bool Lottery::addBet(const std::vector<int>& numbers)
+bool Lottery::addAposta(const std::vector<int>& numbers)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (numbers.empty()) return false;
+    if (numbers.empty() || numbers.size() > qtd_) return false;
 
     for (int n : numbers)
     {
@@ -136,6 +136,7 @@ bool Lottery::addBet(const std::vector<int>& numbers)
     std::vector<int> ordenada = numbers;
     std::sort(ordenada.begin(), ordenada.end());
     if (std::adjacent_find(ordenada.begin(), ordenada.end()) != ordenada.end()) return false;
+    ///adjacent_find busca por vizinhos repetidos, se não encontrar nenhum, retorna o ordenada.end()
 
     bets_.push_back(numbers); // guarda na ordem original em que o usuário digitou
     return true;
