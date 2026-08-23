@@ -11,7 +11,7 @@ static const int qtdPadrao = 5;
 // Teto para o tamanho do intervalo. Existe porque draw() materializa todos os números
 // possíveis num vetor antes de embaralhar: sem esse limite, um ":fim 2000000000" faria o
 // servidor tentar alocar bilhões de ints e morrer
-static const long long rangeMax = 1000000;
+static const long long intervaloMax = 1000000;
 
 /*=======================
 O que é: Construtor
@@ -38,22 +38,22 @@ O que faz: Diz se um trio (inicio, fim, qtd) descreve uma loteria que faz sentid
 Como faz: Checa que o intervalo não está invertido, que se pede pelo menos 1 número, que o
  intervalo cabe no teto de memória, e que não se pede mais números distintos do que existem
  no intervalo
-Possíveis dúvidas: por que calcular range em long long? Porque "fim - inicio" com ints
- extremos (ex: fim = INT_MAX, inicio = INT_MIN) estoura a faixa do int, e overflow de inteiro
- com sinal é comportamento indefinido em C++ — o resultado poderia até sair negativo e passar
- numa checagem que deveria falhar. Promover para long long antes da subtração evita isso.
+Possíveis dúvidas: por que calcular range em long? Porque "fim - inicio + 1" com ints
+ extremos (ex: se fim = INT_MAX, intervalo = INT_MAX + 0 + 1) estoura a faixa do int causando
+ overflow. Promover para long antes da subtração evita isso.
  Esta função NÃO tranca o mutex de propósito: quem chama (os setters) já está segurando o lock,
  e std::mutex não é reentrante — trancar de novo aqui travaria a thread para sempre
 ========================*/
 bool Lottery::isValidConfig(int inicio, int fim, int qtd) const
 {
-    if (inicio >= fim) return false; // intervalo invertido ou de um número só
+    if (inicio >= fim || inicio < 0) return false; // intervalo invertido ou de um número só
     if (qtd < 1) return false;       // sorteio de zero números não faz sentido
 
-    const long long range = static_cast<long long>(fim) - inicio + 1; // quantos números existem no intervalo
+    const long intervalo = static_cast<long>(fim) - inicio + 1; // quantos números existem no intervalo
 
-    if (range > rangeMax) return false; // intervalo grande demais para materializar em draw()
-    if (qtd > range) return false;       // não dá para sortear 10 números distintos de um intervalo de 4
+    if (intervalo > intervaloMax) return false; // intervalo grande demais para materializar em draw()
+    if (qtd >= intervalo) return false;       // não dá para sortear 10 números distintos de um intervalo de 4
+    //Se qtd == intervalo, vai simplesmente sortear todos os possíveis valores
 
     return true;
 }
@@ -166,7 +166,7 @@ DrawResult Lottery::draw()
 
     DrawResult result;
 
-    // universo = todos os números que podem sair. O tamanho é seguro por causa do rangeMax
+    // universo = todos os números que podem sair. O tamanho é seguro por causa do intervaloMax
     std::vector<int> universo(static_cast<std::size_t>(fim_ - inicio_ + 1));
     std::iota(universo.begin(), universo.end(), inicio_); // preenche com inicio_, inicio_+1, ...
     std::shuffle(universo.begin(), universo.end(), rng_);
