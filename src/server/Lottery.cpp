@@ -46,7 +46,6 @@ bool Lottery::isValidConfig(int inicio, int fim, int qtd) const
 
     if (intervalo > intervaloMax) return false; // intervalo grande demais para materializar em draw()
     if (qtd > intervalo) return false;       // não dá para sortear 10 números distintos de um intervalo de 4
-    //Se qtd == intervalo, vai simplesmente sortear todos os possíveis valores
 
     return true;
 }
