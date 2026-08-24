@@ -6,7 +6,7 @@
 //
 // Como a decisão do projeto é UMA LOTERIA POR CLIENTE, cada sessão é independente: tem a
 // própria Lottery e o próprio sorteio de 1 em 1 minuto. Por isso o Server não guarda lista de
-// sessões, não precisa de mutex e não conhece loteria nenhuma — num modelo de sorteio global
+// sessões, não precisa de mutex e não conhece loteria nenhuma, num modelo de sorteio global
 // todas essas coisas teriam que existir aqui, para o broadcast do resultado.
 
 class Server

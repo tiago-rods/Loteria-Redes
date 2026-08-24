@@ -24,7 +24,7 @@ O que faz: Aceita conexões para sempre, entregando cada cliente a uma ClientSes
 Como faz: accept() bloqueia até alguém conectar; o socket devolvido é movido para dentro de uma
  thread nova, que constrói a sessão e chama run() nela
 Possíveis dúvidas: por que uma thread por cliente? Porque ClientSession::run() só retorna quando
- aquele cliente desconecta — chamá-lo aqui direto travaria o accept e o servidor atenderia um
+ aquele cliente desconecta. Chamá-lo aqui direto travaria o accept e o servidor atenderia um
  cliente só. E o try/catch DENTRO da lambda é obrigatório: exceção que escapa da função de uma
  thread chama std::terminate e derruba o servidor inteiro, junto com todos os outros clientes.
 ========================*/
