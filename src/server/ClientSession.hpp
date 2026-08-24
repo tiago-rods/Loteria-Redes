@@ -51,6 +51,8 @@ private:
     // ao cliente ao mesmo tempo
     std::mutex sendMutex_;
 
+    // protege o estado da loteria, pois as duas threads acessam lottery_
+    std::mutex lotteryMutex_;
     /*=======================
     O que é: Thread 1 do servidor
     O que faz: Aguarda mensagens do cliente e interpreta comandos ou apostas
