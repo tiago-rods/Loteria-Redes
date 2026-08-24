@@ -1,9 +1,8 @@
-# testes locais (executavel + fontes de teste)
-tests/
-
-# artefatos de build
+# Artefatos de build — o codigo-fonte (inclusive Makefile e tests/) VAI para o repo,
+# so o que e gerado pela compilacao fica de fora.
 *.o
+*.d
 *.obj
 *.exe
 build/
-Makefile
+bin/
