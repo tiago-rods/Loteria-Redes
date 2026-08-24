@@ -9,7 +9,7 @@
 class ProtocolMessage // representa uma linha já interpretada, recebida via Socket::receiveLine()
 {
 public: 
-    enum class Type 
+    enum class Type // Classe de Enum para Tipos diferentes de Eventos 
     {
         SetInicio, // :inicio
         SetFim, // :fim N

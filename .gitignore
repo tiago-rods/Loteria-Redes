@@ -1,0 +1,9 @@
+# testes locais (executavel + fontes de teste)
+tests/
+
+# artefatos de build
+*.o
+*.obj
+*.exe
+build/
+Makefile
