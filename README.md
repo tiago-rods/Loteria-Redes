@@ -132,7 +132,7 @@ g++ -std=c++20 -Wall -Wextra src/client/*.cpp src/common/*.cpp -o client.exe -lw
 
 O `-lws2_32` é obrigatório: é a biblioteca do Winsock.
 
-**Executando** — servidor primeiro, cliente depois:
+**Executando** — servidor primeiro, cliente depois, em terminais separados:
 
 ```bash
 ./server.exe
@@ -142,23 +142,54 @@ O `-lws2_32` é obrigatório: é a biblioteca do Winsock.
 ./client.exe
 ```
 
+Ambos aceitam argumentos opcionais e usam a porta **54000** por padrão:
+
+```bash
+./server.exe 54000
+```
+
+```bash
+./client.exe 127.0.0.1 54000
+```
+
+## Testes
+
+O projeto tem duas baterias de teste, em `tests/`:
+
+| | O que cobre | Duração |
+|---|---|---|
+| **unidade** (`test_lottery.cpp`) | as regras do sorteio isoladas — validação de configuração e de apostas, conferência de acertos, limpeza do ciclo, formatação, e duas threads mexendo na mesma `Lottery` | instantâneo |
+| **integração** (`test_integration.cpp`) | sobe o `server.exe` de verdade e conversa com ele por TCP: MSG1, todos os comandos, apostas válidas e inválidas, loterias independentes entre dois clientes, um sorteio real e reconexão após desconectar | ~65 s |
+
+```bash
+make test        # só os de unidade (rápido)
+```
+
+```bash
+make test-e2e    # só a integração
+```
+
+```bash
+make test-all    # os dois
+```
+
+O teste de integração não usa mock: ele executa o mesmo binário que seria entregue, num
+processo separado, e valida o que chega pela rede. É por isso que ele demora — espera o ciclo
+real de 1 minuto para conferir o sorteio.
+
 ## Estado atual
 
 | Componente | Estado |
 |---|---|
-| `Socket`, `WinsockGuard`, `Protocol` | ✅ pronto |
-| `Client` | ✅ pronto |
-| `Lottery` | ✅ pronto |
-| `Server` | ✅ pronto |
-| `ClientSession` | 🚧 em desenvolvimento |
-| `server/main.cpp` | ⬜ pendente |
+| `Socket`, `WinsockGuard`, `Protocol` | ✅ |
+| `Client` + `client/main.cpp` | ✅ |
+| `Lottery` | ✅ |
+| `Server` + `server/main.cpp` | ✅ |
+| `ClientSession` | ✅ |
 
-O **cliente já compila e roda**. O servidor ainda não linka: faltam a implementação de
-`ClientSession` e a função `main()` do servidor.
-
-> ⚠️ Enquanto o `server/main.cpp` estiver vazio, o link falha com
-> `undefined reference to WinMain` — que é a forma confusa do MinGW dizer que falta a
-> função `main()`.
+**O projeto está completo e funcional.** Cliente e servidor compilam sem nenhum warning sob
+`-Wall -Wextra`, e a bateria de testes passa inteira — incluindo um teste de integração que
+sobe o servidor de verdade, conecta dois clientes e acompanha um ciclo real de sorteio.
 
 ## Autores
 
