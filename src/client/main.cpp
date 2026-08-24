@@ -10,11 +10,29 @@ int main(int argc, char* argv[])
 
     //para caso decidamos passar por argc
 
-    if(argc >= 2 ) host = argv[1]; 
-    if (argc >= 3 && atoi(argv[2]) <= 65535) port = static_cast<unsigned short>(std::atoi(argv[2])); // portas TCP vão até 65535
+    if(argc >= 2 ) host = argv[1];
 
-    try
+    try // verifica se o port é valido 2 casos testados, número fora do alcance ou não é um número
     {
+        if (argc >= 3)
+        {
+            int portValue;
+            try
+            {
+                portValue = std::stoi(argv[2]); // lança invalid_argument/out_of_range se não for número válido
+            }
+            catch (const std::exception&)
+            {
+                throw std::runtime_error("porta invalida: '" + std::string(argv[2]) + "' nao e um numero");
+            }
+
+            if (portValue < 0 || portValue > 65535)
+            {
+                throw std::runtime_error("porta invalida, deve estar entre 0 e 65535");
+            }
+            port = static_cast<unsigned short>(portValue);
+        }
+
         WinsockGuard guard; // inicia RAII do Socket
 
         Client client; // cria objeto client
