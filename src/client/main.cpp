@@ -1,6 +1,8 @@
 #include"Client.hpp"
 #include"../common/WinsockGuard.hpp"
 #include<iostream>
+#include<string>    // std::string, std::stoi
+#include<stdexcept> // std::runtime_error
 
 //vou deixar porta fixa por enquanto, podemos mudar para deixar porta por argv posteriormente
 int main(int argc, char* argv[])

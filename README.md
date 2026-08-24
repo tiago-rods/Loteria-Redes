@@ -151,9 +151,12 @@ O `-lws2_32` é obrigatório: é a biblioteca do Winsock.
 | `Lottery` | ✅ pronto |
 | `Server` | ✅ pronto |
 | `ClientSession` | 🚧 em desenvolvimento |
-| `main.cpp` (cliente e servidor) | ⬜ pendente |
+| `server/main.cpp` | ⬜ pendente |
 
-> ⚠️ Enquanto os `main.cpp` estiverem vazios, o link falha com
+O **cliente já compila e roda**. O servidor ainda não linka: faltam a implementação de
+`ClientSession` e a função `main()` do servidor.
+
+> ⚠️ Enquanto o `server/main.cpp` estiver vazio, o link falha com
 > `undefined reference to WinMain` — que é a forma confusa do MinGW dizer que falta a
 > função `main()`.
 
@@ -161,7 +164,7 @@ O `-lws2_32` é obrigatório: é a biblioteca do Winsock.
 
 - [Lucas Kitsuta Sabino](https://github.com/LkS-305)
 - [Tiago Rodrigues](https://github.com/tiago-rods)
-- Artur Contarelli
+- [Artur Contarelli](https://github.com/arturcontarelli)
 
 ## Referência
 
