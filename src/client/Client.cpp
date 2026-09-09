@@ -63,6 +63,12 @@ void Client::inputLoop()
             std::cerr << "Erro no envio de dados: " << e.what() << std::endl;
             break;
         }
+        if (line == ":sair")
+        {
+            running_ = false;
+            socket_.shutdown();
+            break;
+        }
     }
 }
 
