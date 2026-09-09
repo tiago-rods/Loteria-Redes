@@ -204,6 +204,13 @@ std::string Socket::receiveLine()
 return result;
 }
 
+/*
+Adicionar documentação depois, preciso fazer gerenciamento agr
+*/
+void Socket::shutdown()
+{
+    if (handle_ != INVALID_SOCKET) ::shutdown(handle_, SD_BOTH);
+}
 /*=======================
 O que é: Fecha o socket
 O que faz: Libera o handle junto ao sistema operacional, se ainda estiver válido

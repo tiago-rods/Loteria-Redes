@@ -35,3 +35,32 @@ A thread 2 do servidor será iniciada aguardando por 1 minuto, e fazendo sorteio
 pelo usuário. Ao terminar o sorteio, ela verificará se o usuário fez apostas (percorrendo a lista referenciada acima), e
 verificando se alguma aposta foi sorteada. Após isso, ela enviará o resultado do sorteio ao cliente, e informará quais
 números ele acertou. A lista será então zerada e um novo ciclo será iniciado
+
+Fase 2: Implementação de multi-client: As atualizações abaixo são válidas para todos os
+temas
+Cliente:
+Deverá implementar um comando solicitando a desconexão e término da execução. O server por sua vez terminará a
+conexão TCP, e o cliente terminará sua execução.
+Server:
+- Deverá fechar a conexão TCP quando o cliente assim solicitar, e desalocar os dados daquele cliente.
+-O server deverá lidar com múltiplos clientes simultaneamente que deverão ser tratados totalmente independentes.
+Dica: Qualquer informação ou parâmetro do serviço ao cliente deverá ser instanciado dentro das threads, que
+deverão ter seus handlers armazenados em listas para permitir gerenciamento das conexões pela linha principal de
+processamento do server, a menos que será uma estrutura de memória que seja válida para todas as threads, que
+neste caso, deverá ser criada como memória compartilhada.
+-O server deverá limitar a quantidade de clientes através de um parâmetro passado por linha de comando ao ser
+executado.
+-Quando um cliente desconecta, deverá ser liberada uma posição no numero de clientes disponíveis.
+- Se um cliente tenta se conectar e o limite já foi atingido, o server deverá retornar uma mensagem informando isso
+ao invés de “<HORARIO>: CONECTADO!!” e desconectar a conexão.
+Dica: O método listen() no socket do servidor não causa bloqueio na execução. Ele apenas coloca o socket em modo
+passivo, ou seja, preparado para aceitar conexões.
+Quem realmente bloqueia a execução é o método accept(), que aguarda até que um cliente tente se conectar.
+Quando a execução continua após o accept(), isso indica que um cliente foi conectado com sucesso.
+Nesse momento, o servidor deve criar uma thread de trabalho (working thread) para lidar com esse
+cliente, passando a conexão estabelecida como parâmetro para essa thread. Enquanto isso, a thread principal
+deve retornar imediatamente ao accept(), para continuar aguardando novas conexões.
+A thread de trabalho será responsável por executar as funcionalidades da aplicação junto ao cliente. Se a quantidade de
+clientes conectados estiver dentro do limite permitido, o atendimento prossegue normalmente. Caso contrário, a thread
+deve informar que o limite foi excedido, encerrar a conexão com o cliente e finalizar sua execução, liberando recursos
+para os próximos
