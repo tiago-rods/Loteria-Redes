@@ -204,9 +204,17 @@ std::string Socket::receiveLine()
 return result;
 }
 
-/*
-Adicionar documentação depois, preciso fazer gerenciamento agr
-*/
+/*=======================
+O que é: Interrompe operações bloqueantes no socket, sem fechar o handle
+O que faz: Avisa o sistema operacional que este lado não vai mais mandar nem receber dados,
+ fazendo qualquer send()/recv() bloqueado nesse handle retornar imediatamente
+Como faz: Chama ::shutdown() com SD_BOTH (interrompe envio e recebimento)
+Possíveis dúvidas: por que não usar close() direto? Porque close() zera o handle_, e se outra
+ thread estiver bloqueada num recv() nesse mesmo handle nesse instante, fechar o handle enquanto
+ ele ainda está em uso por outra thread é arriscado no Winsock. shutdown() só desativa o canal;
+ quem efetivamente libera o handle continua sendo close(), chamado depois que as threads
+ que o usavam já tiverem retornado
+========================*/
 void Socket::shutdown()
 {
     if (handle_ != INVALID_SOCKET) ::shutdown(handle_, SD_BOTH);
