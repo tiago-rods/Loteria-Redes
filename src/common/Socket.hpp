@@ -26,6 +26,7 @@ public:
     std::string receiveLine(); //Lê até encontrar um /n 
 
     void close();
+    void shutdown(); // interrompe recv()/send() bloqueados sem fechar o handle
     bool isValid() const; // Verifica se o socket é válido obs: const no final do método indica que ele não modifica o estado do objeto
 
 private:

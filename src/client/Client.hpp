@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic> 
 #include<string>
 #include "../common/Socket.hpp"
 
@@ -20,4 +21,5 @@ private:
     void outputLoop();
 
     Socket socket_;
+    std::atomic<bool> running_ {true}; // flag atomica simples que uma thread seta e a outra le sem precisar de mutex
 };

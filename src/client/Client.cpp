@@ -63,6 +63,12 @@ void Client::inputLoop()
             std::cerr << "Erro no envio de dados: " << e.what() << std::endl;
             break;
         }
+        if (line == ":sair")
+        {
+            running_ = false;
+            socket_.shutdown();
+            break;
+        }
     }
 }
 
@@ -85,7 +91,20 @@ void Client::outputLoop()
     
         catch (const std::exception& e)
         {
-            std::cerr << "Conexão encerrada: " << e.what() << std::endl;
+            // receiveLine() lança tanto quando o servidor cai quanto quando a própria
+            // inputLoop chama socket_.shutdown() após o comando ":sair", os dois casos
+            // caem aqui porque param o recv() bloqueado da mesma forma. running_ é o que
+            // diferencia: só a inputLoop o zera, e só faz isso quando a saída foi pedida
+            // pelo usuário. Por isso running_ == true aqui significa queda inesperada
+            // (mensagem de erro), e running_ == false significa desconexão intencional
+            if (running_)
+            {
+             std::cerr << "Conexão encerrada: " << e.what() << std::endl;
+            }
+            else
+            {
+                std::cout << "Desconectado" << std::endl;
+            }
             break;
         }
     }
