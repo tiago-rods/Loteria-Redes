@@ -142,15 +142,20 @@ O `-lws2_32` é obrigatório: é a biblioteca do Winsock.
 ./client.exe
 ```
 
-Ambos aceitam argumentos opcionais e usam a porta **54000** por padrão:
+Ambos aceitam argumentos opcionais e usam a porta **54000** por padrão. O servidor recebe ainda
+um segundo argumento, o limite de clientes simultâneos, que vale **20** se não for informado:
 
 ```bash
-./server.exe 54000
+./server.exe 54000 20
 ```
 
 ```bash
 ./client.exe 127.0.0.1 54000
 ```
+
+O cliente que chega depois de o limite ter sido atingido recebe
+`ERRO: LIMITE DE CLIENTES ATINGIDO` no lugar do `<HORARIO>: CONECTADO!!` e tem a conexão
+encerrada. A vaga volta a ficar livre assim que qualquer sessão termina.
 
 ## Testes
 

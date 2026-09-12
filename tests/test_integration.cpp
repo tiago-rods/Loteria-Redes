@@ -55,12 +55,13 @@ static std::string pedir(Socket& s, const std::string& comando)
 O que é: Auxiliar que sobe o servidor
 O que faz: Executa bin/server.exe na porta indicada, num processo separado
 Como faz: CreateProcessA com a saída redirecionada para NUL, para os logs do servidor não
- se misturarem com a saída do teste
+ se misturarem com a saída do teste. maxClientes só entra na linha de comando se for > 0,
+ assim as chamadas que não se importam com o limite continuam usando o padrão do servidor
 Possíveis dúvidas: por que processo separado em vez de instanciar Server aqui? Porque assim o
  teste exercita o binário real, incluindo o main() e o WinsockGuard dele — é o mesmo executável
  que vai ser entregue, não uma montagem diferente feita só para testar
 ========================*/
-static PROCESS_INFORMATION subirServidor(unsigned short porta)
+static PROCESS_INFORMATION subirServidor(unsigned short porta, int maxClientes = 0)
 {
     SECURITY_ATTRIBUTES sa{};
     sa.nLength = sizeof(sa);
@@ -78,6 +79,8 @@ static PROCESS_INFORMATION subirServidor(unsigned short porta)
     PROCESS_INFORMATION pi{};
 
     std::string cmd = "bin\\server.exe " + std::to_string(porta);
+    if (maxClientes > 0) cmd += " " + std::to_string(maxClientes);
+
     std::vector<char> linha(cmd.begin(), cmd.end());
     linha.push_back('\0'); // CreateProcessA exige buffer modificável e terminado em nulo
 
@@ -93,12 +96,16 @@ static PROCESS_INFORMATION subirServidor(unsigned short porta)
 int main()
 {
     const unsigned short PORTA = 54321;
+    const unsigned short PORTA_LIMITE = 54322; // servidor separado, só para o teste do limite
 
     WinsockGuard guard;
 
     std::cout << "subindo bin\\server.exe na porta " << PORTA << "...\n";
     PROCESS_INFORMATION servidor = subirServidor(PORTA);
     std::this_thread::sleep_for(std::chrono::milliseconds(700)); // tempo para o bind/listen
+
+    // preenchido na secao [5]; fica aqui fora para ser encerrado mesmo se o teste lancar
+    PROCESS_INFORMATION servidorLimite{};
 
     try
     {
@@ -144,8 +151,41 @@ int main()
         checkIgual(pedir(b, ":qtd 2"), "QUANTIDADE CONFIGURADA: 2", "config do B e aceita");
         checkIgual(pedir(a, "1 2 3"), "APOSTA REGISTRADA", "qtd 3 do A nao foi afetada pelo B");
 
-        // ---- 5. sorteio de verdade (espera o ciclo de 1 minuto) ----
-        std::cout << "[5] sorteio (aguardando o ciclo real de 60s...)\n";
+        // ---- 5. limite de clientes simultaneos ----
+        std::cout << "[5] limite de clientes\n";
+
+        // servidor proprio, em porta separada e com limite 1, para nao interferir no principal
+        servidorLimite = subirServidor(PORTA_LIMITE, 1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(700));
+
+        {
+            Socket x;
+            x.connectTo("127.0.0.1", PORTA_LIMITE);
+            check(x.receiveLine().substr(8) == ": CONECTADO!!",
+                  "cliente dentro do limite recebe a MSG1");
+
+            Socket y;
+            y.connectTo("127.0.0.1", PORTA_LIMITE);
+            checkIgual(y.receiveLine(), "ERRO: LIMITE DE CLIENTES ATINGIDO",
+                       "cliente acima do limite e recusado no lugar da MSG1");
+
+            bool caiu = false;
+            try { y.receiveLine(); } catch (const std::exception&) { caiu = true; }
+            check(caiu, "servidor encerra a conexao do cliente recusado");
+
+            // a vaga so volta quando a sessao inteira termina: o drawLoop do servidor so olha a
+            // flag de 1 em 1 segundo, e run() faz join das duas threads antes de retornar
+            x.close();
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+
+            Socket z;
+            z.connectTo("127.0.0.1", PORTA_LIMITE);
+            check(z.receiveLine().substr(8) == ": CONECTADO!!",
+                  "vaga e liberada quando um cliente desconecta");
+        }
+
+        // ---- 6. sorteio de verdade (espera o ciclo de 1 minuto) ----
+        std::cout << "[6] sorteio (aguardando o ciclo real de 60s...)\n";
 
         // le em outra thread para o teste nao ficar preso para sempre se o sorteio nao vier
         auto leitura = std::async(std::launch::async, [&a]() {
@@ -187,8 +227,8 @@ int main()
             check(false, "as 2 apostas do cliente A foram conferidas");
         }
 
-        // ---- 6. desconexao nao derruba o servidor ----
-        std::cout << "[6] desconexao\n";
+        // ---- 7. desconexao nao derruba o servidor ----
+        std::cout << "[7] desconexao\n";
         a.close();
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
@@ -207,6 +247,14 @@ int main()
     TerminateProcess(servidor.hProcess, 0);
     CloseHandle(servidor.hProcess);
     CloseHandle(servidor.hThread);
+
+    // so foi criado se a secao [5] chegou a rodar; sem isso ele ficaria orfao segurando a porta
+    if (servidorLimite.hProcess != nullptr)
+    {
+        TerminateProcess(servidorLimite.hProcess, 0);
+        CloseHandle(servidorLimite.hProcess);
+        CloseHandle(servidorLimite.hThread);
+    }
 
     std::cout << "\n"
               << (falhas == 0 ? "INTEGRACAO: TODOS OS TESTES PASSARAM"
