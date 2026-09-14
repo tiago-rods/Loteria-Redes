@@ -175,6 +175,25 @@ void ClientSession::receiveLoop()
                     break;
                 }
 
+                case ProtocolMessage::Type::Sair:
+                {
+                    std::cout << "Cliente pediu para desconectar." << std::endl;
+
+                    // manda a confirmação ANTES do shutdown: depois dele, sendAll() falharia,
+                    // já que shutdown(SD_SEND) desativa o envio neste mesmo handle
+                    sendLine("DESCONECTANDO");
+
+                    running_ = false;
+
+                    // fecha ativamente o lado do servidor da conexão, como o enunciado pede
+                    // ("o server deverá fechar a conexão TCP quando o cliente solicitar"),
+                    // em vez de só esperar o drawLoop notar running_ == false no próximo
+                    // tick de 1 segundo
+                    socket_.shutdown();
+
+                    break;
+                }
+
                 case ProtocolMessage::Type::Invalid:
                 default:
                 {

@@ -23,6 +23,16 @@ static ProtocolMessage parseCommand(const std::string& line) // recebe a linha p
     // keyword = :inicio e value = 5, sem necessidade de parsing manual de indices
     iss >> keyword; // lê o primeiro token (tudo até o primeiro espaço) e guarda em keyword
 
+    // :sair não tem valor numérico associado, diferente de :inicio/:fim/:qtd, então precisa
+    // ser tratado antes da tentativa de ler "value" logo abaixo, que rejeitaria ":sair" por
+    // não achar número nenhum depois dele
+    if (keyword == ":sair")
+    {
+        ProtocolMessage msg;
+        msg.type = ProtocolMessage::Type::Sair;
+        return msg;
+    }
+
     //tenta ler o próximo token e converter para int, guardando-o em value, retorna a propria stream que converte para bool dependendo da saída
     if (!(iss >> value)) return ProtocolMessage{}; // retorna invalido por padrão
 
