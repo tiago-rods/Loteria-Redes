@@ -14,6 +14,7 @@ public:
         SetInicio, // :inicio
         SetFim, // :fim N
         SetQtd, // :qtd N
+        Sair, // :sair - pede a desconexao
         Aposta, // N N N...
         Invalid // linha que não fica de acordo com o esperado
     };

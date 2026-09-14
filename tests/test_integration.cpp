@@ -104,7 +104,7 @@ int main()
     PROCESS_INFORMATION servidor = subirServidor(PORTA);
     std::this_thread::sleep_for(std::chrono::milliseconds(700)); // tempo para o bind/listen
 
-    // preenchido na secao [5]; fica aqui fora para ser encerrado mesmo se o teste lancar
+    // preenchido na secao [6]; fica aqui fora para ser encerrado mesmo se o teste lancar
     PROCESS_INFORMATION servidorLimite{};
 
     try
@@ -151,8 +151,22 @@ int main()
         checkIgual(pedir(b, ":qtd 2"), "QUANTIDADE CONFIGURADA: 2", "config do B e aceita");
         checkIgual(pedir(a, "1 2 3"), "APOSTA REGISTRADA", "qtd 3 do A nao foi afetada pelo B");
 
-        // ---- 5. limite de clientes simultaneos ----
-        std::cout << "[5] limite de clientes\n";
+        // ---- 5. comando :sair fecha a conexao no servidor ----
+        std::cout << "[5] comando :sair\n";
+        {
+            Socket d;
+            d.connectTo("127.0.0.1", PORTA);
+            d.receiveLine(); // MSG1
+
+            checkIgual(pedir(d, ":sair"), "DESCONECTANDO", "':sair' e reconhecido e confirmado");
+
+            bool caiu = false;
+            try { d.receiveLine(); } catch (const std::exception&) { caiu = true; }
+            check(caiu, "servidor fecha a conexao apos ':sair'");
+        }
+
+        // ---- 6. limite de clientes simultaneos ----
+        std::cout << "[6] limite de clientes\n";
 
         // servidor proprio, em porta separada e com limite 1, para nao interferir no principal
         servidorLimite = subirServidor(PORTA_LIMITE, 1);
@@ -184,8 +198,8 @@ int main()
                   "vaga e liberada quando um cliente desconecta");
         }
 
-        // ---- 6. sorteio de verdade (espera o ciclo de 1 minuto) ----
-        std::cout << "[6] sorteio (aguardando o ciclo real de 60s...)\n";
+        // ---- 7. sorteio de verdade (espera o ciclo de 1 minuto) ----
+        std::cout << "[7] sorteio (aguardando o ciclo real de 60s...)\n";
 
         // le em outra thread para o teste nao ficar preso para sempre se o sorteio nao vier
         auto leitura = std::async(std::launch::async, [&a]() {
@@ -227,8 +241,8 @@ int main()
             check(false, "as 2 apostas do cliente A foram conferidas");
         }
 
-        // ---- 7. desconexao nao derruba o servidor ----
-        std::cout << "[7] desconexao\n";
+        // ---- 8. desconexao nao derruba o servidor ----
+        std::cout << "[8] desconexao\n";
         a.close();
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
@@ -248,7 +262,7 @@ int main()
     CloseHandle(servidor.hProcess);
     CloseHandle(servidor.hThread);
 
-    // so foi criado se a secao [5] chegou a rodar; sem isso ele ficaria orfao segurando a porta
+    // so foi criado se a secao [6] chegou a rodar; sem isso ele ficaria orfao segurando a porta
     if (servidorLimite.hProcess != nullptr)
     {
         TerminateProcess(servidorLimite.hProcess, 0);

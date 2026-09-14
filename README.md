@@ -60,9 +60,13 @@ aquilo é comando ou aposta. Linhas iniciadas por `:` são comandos; o resto é 
 | `:fim N` | define o maior número sorteável |
 | `:qtd N` | define quantos números saem por sorteio |
 | `7 13 42` | registra uma aposta |
+| `:sair` | pede a desconexão |
 
 Sem nenhuma configuração, o padrão é **0 a 100, 5 números sorteados**. A configuração pode ser
 alterada a qualquer momento e vale para o sorteio seguinte.
+
+`:sair` faz o servidor confirmar com `DESCONECTANDO` e fechar o lado dele da conexão; o
+cliente fecha o dele e termina a execução.
 
 **Exemplo de sessão:**
 
