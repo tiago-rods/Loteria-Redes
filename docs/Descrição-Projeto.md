@@ -64,3 +64,16 @@ A thread de trabalho será responsável por executar as funcionalidades da aplic
 clientes conectados estiver dentro do limite permitido, o atendimento prossegue normalmente. Caso contrário, a thread
 deve informar que o limite foi excedido, encerrar a conexão com o cliente e finalizar sua execução, liberando recursos
 para os próximos
+
+Fase 3 – Controle de exceções. As atualizações abaixo são válidas para todos os temas.
+Cliente:
+O cliente deverá lidar com exceções, como erro de conexão e desconexão feita pelo server.
+Server:
+- Deverá lidar com exceções, como erro de conexão e desconexão feita pelo cliente sem a devida solicitação de
+desconexão.
+- O server deverá implementar todas as funcionalidades previstas inicialmente pelo projeto, para todos os clientes,
+simultaneamente, com isolamento total de dados e conexões.
+- O server deverá rodar continuamente, recebendo novas conexões quando as antigas sejam desconectadas, dando a
+manutenção correta nos contadores de conexões simultâneas.
+- É esperado que nem o cliente nem o server apresente nenhum erro ou warning gerado pelo interpretador ou
+ambiente de runtime em situação nenhuma.

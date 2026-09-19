@@ -67,14 +67,18 @@ static PROCESS_INFORMATION subirServidor(unsigned short porta, int maxClientes =
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
 
-    HANDLE nul = CreateFileA("NUL", GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ,
+    HANDLE nulOut = CreateFileA("NUL", GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ,
                              &sa, OPEN_EXISTING, 0, nullptr);
+    
+    HANDLE nulIn = CreateFileA("NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                             &sa, OPEN_EXISTING, 0, nullptr );
 
     STARTUPINFOA si{};
     si.cb = sizeof(si);
     si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdOutput = nul;
-    si.hStdError = nul;
+    si.hStdInput = nulIn;
+    si.hStdOutput = nulOut;
+    si.hStdError = nulOut;
 
     PROCESS_INFORMATION pi{};
 
@@ -93,10 +97,51 @@ static PROCESS_INFORMATION subirServidor(unsigned short porta, int maxClientes =
     return pi;
 }
 
+/*=======================
+O que é: Auxiliar que sobe o cliente
+O que faz: Executa bin/client.exe apontando para host/porta indicados, num processo separado
+Como faz: mesmo esquema de subirServidor, com stdin redirecionado para NUL — este teste não
+ precisa digitar nada no cliente, só verificar se ele encerra sozinho quando o servidor cai
+========================*/
+static PROCESS_INFORMATION subirCliente(unsigned short porta)
+{
+    SECURITY_ATTRIBUTES sa{};
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+
+    HANDLE nulOut = CreateFileA("NUL", GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ,
+                                 &sa, OPEN_EXISTING, 0, nullptr);
+
+    HANDLE nulIn = CreateFileA("NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                &sa, OPEN_EXISTING, 0, nullptr);
+
+    STARTUPINFOA si{};
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdInput = nulIn;
+    si.hStdOutput = nulOut;
+    si.hStdError = nulOut;
+
+    PROCESS_INFORMATION pi{};
+
+    std::string cmd = "bin\\client.exe 127.0.0.1 " + std::to_string(porta);
+    std::vector<char> linha(cmd.begin(), cmd.end());
+    linha.push_back('\0'); // CreateProcessA exige buffer modificável e terminado em nulo
+
+    if (!CreateProcessA(nullptr, linha.data(), nullptr, nullptr, TRUE,
+                        CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi))
+    {
+        throw std::runtime_error("nao consegui executar bin\\client.exe - compile com 'make client' antes");
+    }
+
+    return pi;
+}
+
 int main()
 {
     const unsigned short PORTA = 54321;
     const unsigned short PORTA_LIMITE = 54322; // servidor separado, só para o teste do limite
+    const unsigned short PORTA_CLIENTE = 54323; // servidor separado, só para teste do client
 
     WinsockGuard guard;
 
@@ -106,6 +151,10 @@ int main()
 
     // preenchido na secao [6]; fica aqui fora para ser encerrado mesmo se o teste lancar
     PROCESS_INFORMATION servidorLimite{};
+
+    // preenchidos na secao [9]; mesmo motivo
+    PROCESS_INFORMATION servidorClienteTeste{};
+    PROCESS_INFORMATION clienteTeste{};
 
     try
     {
@@ -251,6 +300,32 @@ int main()
         std::string welcomeC = c.receiveLine();
         check(welcomeC.substr(8) == ": CONECTADO!!", "servidor continua aceitando apos um cliente sair");
         checkIgual(pedir(c, "7"), "APOSTA REGISTRADA", "novo cliente comeca com loteria limpa");
+
+        // ---- 9. cliente encerra sozinho quando o servidor cai (regressao da correcao da inputLoop) ----
+        std::cout << "[9] cliente nao trava esperando teclado quando o servidor cai\n";
+        {
+            servidorClienteTeste = subirServidor(PORTA_CLIENTE);
+            std::this_thread::sleep_for(std::chrono::milliseconds(700));
+
+            clienteTeste = subirCliente(PORTA_CLIENTE);
+            std::this_thread::sleep_for(std::chrono::milliseconds(700)); // tempo do cliente conectar
+
+            // mata o servidor sem avisar o cliente, simulando uma queda inesperada
+            TerminateProcess(servidorClienteTeste.hProcess, 0);
+            CloseHandle(servidorClienteTeste.hProcess);
+            CloseHandle(servidorClienteTeste.hThread);
+            servidorClienteTeste.hProcess = nullptr;
+
+            // antes da correcao, o cliente ficava preso para sempre esperando o teclado.
+            // depois dela, outputLoop chama std::exit() assim que percebe a queda
+            DWORD resultado = WaitForSingleObject(clienteTeste.hProcess, 5000);
+            check(resultado == WAIT_OBJECT_0, "cliente encerra sozinho em ate 5s apos o servidor cair");
+
+            if (resultado != WAIT_OBJECT_0) TerminateProcess(clienteTeste.hProcess, 0); // nao deixa orfao
+            CloseHandle(clienteTeste.hProcess);
+            CloseHandle(clienteTeste.hThread);
+            clienteTeste.hProcess = nullptr;
+        }
     }
     catch (const std::exception& e)
     {
@@ -268,6 +343,20 @@ int main()
         TerminateProcess(servidorLimite.hProcess, 0);
         CloseHandle(servidorLimite.hProcess);
         CloseHandle(servidorLimite.hThread);
+    }
+
+    // idem para a secao [9]: so ficam != nullptr se o teste lancou antes da limpeza normal dela
+    if (servidorClienteTeste.hProcess != nullptr)
+    {
+        TerminateProcess(servidorClienteTeste.hProcess, 0);
+        CloseHandle(servidorClienteTeste.hProcess);
+        CloseHandle(servidorClienteTeste.hThread);
+    }
+    if (clienteTeste.hProcess != nullptr)
+    {
+        TerminateProcess(clienteTeste.hProcess, 0);
+        CloseHandle(clienteTeste.hProcess);
+        CloseHandle(clienteTeste.hThread);
     }
 
     std::cout << "\n"

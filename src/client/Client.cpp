@@ -1,6 +1,7 @@
 #include "Client.hpp"
 #include <iostream>
 #include <thread>
+#include <cstdlib>
 
 /*=======================
 O que é: Construtor
@@ -99,7 +100,16 @@ void Client::outputLoop()
             // (mensagem de erro), e running_ == false significa desconexão intencional
             if (running_)
             {
-             std::cerr << "Conexão encerrada: " << e.what() << std::endl;
+                std::cerr << "Conexão encerrada: " << e.what() << std::endl;
+
+                /* o inputLoop está bloqueado em std::getLine(std::cin, ...) e não existe
+                forma portátil de destavar uma leitura de teclado em andamento
+                Como a conexão já caio, não tem mais o que fazer: encerra o processo aqui 
+                mesmo, em vez de esperar o join da inputThread (que só voltria quanod o usuário digitasse algo)
+                deixando o cliente pendurado indefinidademnte
+                */
+
+                std::exit(1);
             }
             else
             {
@@ -109,7 +119,3 @@ void Client::outputLoop()
         }
     }
 }
-
-
-// observação se o servidor fechar a conexão, outputLoop percebe na hora, via receiveLine(), e encerra. Porém o inputLoop só vai finalizar na próxima
-// vez que o usuário digitar algo e tentar um sendAll. Ver se isso é algo necessário de resolver posteriormente
