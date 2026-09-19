@@ -276,6 +276,13 @@ void ClientSession::drawLoop()
 
             running_ = false;
 
+            /*
+            Se for a drawLoop quem detecta a queda primeiro, a receiveLoop pode estar parada
+            em socket_.receiveLine() esperando dados que nunca vão chegar. shutdown() destrava esse
+            recv() na hora, do mesmo jeito que já é feito no caminho dew :sair
+            */
+            socket_.shutdown();
+
             break;
         }
     }
